@@ -62,7 +62,7 @@ def test_auth_errors(client):
     assert r.status_code == 422
     r = client.post("/api/auth/login", json={"email": "nobody@example.org", "password": "whatever-123"})
     assert r.status_code == 401
-    assert client.get("/api/auth/me").json() == {"user": None}
+    assert client.get("/api/auth/me").json()["user"] is None
 
 
 def test_csrf_header_required(client):
@@ -95,3 +95,84 @@ def test_sources(client):
     s = client.get("/api/sources").json()
     assert s["counts"]["groups"] > 150
     assert s["keys"] == {"otx": False, "acled": False}
+
+
+def test_activity_pagination_and_country_filter(client, db):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models import ActivityEvent
+
+    now = datetime.now(timezone.utc)
+    for i in range(7):
+        db.add(ActivityEvent(source_key="pag", source_type="rss", source_name="Pag", external_id=f"p{i}",
+                             title=f"Pagination item {i}", published_at=now - timedelta(hours=i),
+                             countries=["EE"] if i % 2 == 0 else ["LV"]))
+    db.commit()
+    r = client.get("/api/activity", params={"q": "pagination item", "limit": 3, "offset": 0}).json()
+    assert r["total"] == 7 and [x["title"] for x in r["items"]] == ["Pagination item 0", "Pagination item 1", "Pagination item 2"]
+    r2 = client.get("/api/activity", params={"q": "pagination item", "limit": 3, "offset": 6}).json()
+    assert [x["title"] for x in r2["items"]] == ["Pagination item 6"]
+    ee = client.get("/api/activity", params={"q": "pagination item", "country": "ee"}).json()
+    assert ee["total"] == 4
+    assert client.get("/api/activity", params={"country": "E1"}).status_code == 422
+
+
+def test_password_change_revokes_other_sessions(client):
+    import uuid
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    email = f"pw-{uuid.uuid4().hex[:8]}@example.org"
+    client.cookies.clear()
+    assert client.post("/api/auth/register", json={"email": email, "password": "first password 123", "display_name": "P"}).status_code == 201
+    with TestClient(app) as other:
+        other.headers.update({"X-Requested-With": "shadowtrace"})
+        assert other.post("/api/auth/login", json={"email": email, "password": "first password 123"}).status_code == 200
+        assert other.get("/api/auth/me").json()["user"]["email"] == email
+
+        import time
+        time.sleep(1.1)  # iat has 1 s resolution
+        bad = client.post("/api/auth/password", json={"current_password": "wrong", "new_password": "second password 456"})
+        assert bad.status_code == 403
+        ok = client.post("/api/auth/password", json={"current_password": "first password 123", "new_password": "second password 456"})
+        assert ok.status_code == 204
+        assert client.get("/api/auth/me").json()["user"]["email"] == email  # this session survives
+        assert other.get("/api/auth/me").json()["user"] is None  # the other one is revoked
+    assert client.post("/api/auth/login", json={"email": email, "password": "second password 456"}).status_code == 200
+
+
+def test_delete_account_requires_password(user_client):
+    c = user_client
+    assert c.post("/api/auth/delete-account", json={"password": "nope"}).status_code == 403
+    assert c.post("/api/auth/delete-account", json={"password": "correct horse battery"}).status_code == 204
+    assert c.get("/api/auth/me").json()["user"] is None
+
+
+def test_me_reports_registration(client):
+    assert client.get("/api/auth/me").json()["registration_open"] is True
+
+
+def test_runtime_settings_check(monkeypatch):
+    import pytest
+
+    from app.config import check_runtime_settings, get_settings
+
+    monkeypatch.setenv("ST_SECRET_KEY", "change-me")
+    monkeypatch.setenv("ST_DEBUG", "false")
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(RuntimeError):
+            check_runtime_settings()
+        monkeypatch.setenv("ST_DEBUG", "true")
+        get_settings.cache_clear()
+        check_runtime_settings()
+    finally:
+        monkeypatch.undo()
+        get_settings.cache_clear()
+
+
+def test_auth_rate_limit(client):
+    codes = [client.post("/api/auth/login", json={"email": "rl@example.org", "password": "x"}).status_code for _ in range(12)]
+    assert codes[:10] == [401] * 10 and codes[10:] == [429, 429]

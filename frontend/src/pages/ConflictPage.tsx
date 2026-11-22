@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { api, qs, type ConflictDetail } from "../lib/api";
@@ -37,6 +38,7 @@ export default function ConflictPage() {
     queryFn: () => api<ConflictDetail>(`/api/hybrid/conflicts/${encodeURIComponent(slug)}${qs({ days, scope })}`),
     placeholderData: (prev) => prev,
   });
+  useTitle(q.data?.name);
   const world = useQuery({ queryKey: ["world"], queryFn: loadWorld, staleTime: Infinity });
   const c = q.data;
 

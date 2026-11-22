@@ -1,46 +1,63 @@
-# ShadowTrace: `cp .env.example .env`, set ST_SECRET_KEY (and optional feed keys), then `docker compose up -d --build`.
-# Web UI on http://localhost:8080
+# ShadowTrace base stack.
+#   Local:  cp .env.example .env  (set ST_SECRET_KEY, POSTGRES_PASSWORD)  →  docker compose up -d --build
+#           UI on http://localhost:8080 (bound to 127.0.0.1 only)
+#   Server: also set ST_DOMAIN and COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml in .env
+#           → Caddy terminates HTTPS on 80/443 (see README "Deploying to a server").
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+x-backend: &backend
+  build: ./backend
+  image: shadowtrace-backend
+  env_file: .env
+  environment:
+    ST_DATABASE_URL: postgresql+psycopg://shadowtrace:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/shadowtrace
+  depends_on:
+    db: { condition: service_healthy }
+  restart: unless-stopped
+  logging: *logging
+
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: shadowtrace
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shadowtrace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: shadowtrace
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shadowtrace"]
+      test: ["CMD-SHELL", "pg_isready -U shadowtrace -d shadowtrace"]
       interval: 5s
       retries: 20
     restart: unless-stopped
+    logging: *logging
 
   api:
-    build: ./backend
-    env_file: .env
-    environment:
-      ST_DATABASE_URL: postgresql+psycopg://shadowtrace:${POSTGRES_PASSWORD:-shadowtrace}@db:5432/shadowtrace
-    depends_on:
-      db: { condition: service_healthy }
-    restart: unless-stopped
+    <<: *backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
 
-  # Single scheduler process: bootstraps MITRE + curation, then polls all feeds and runs correlation.
+  # Single scheduler process: applies migrations + curation, then polls all feeds and runs correlation.
   worker:
-    build: ./backend
+    <<: *backend
     command: ["python", "-m", "app.worker"]
-    env_file: .env
-    environment:
-      ST_DATABASE_URL: postgresql+psycopg://shadowtrace:${POSTGRES_PASSWORD:-shadowtrace}@db:5432/shadowtrace
-    depends_on:
-      db: { condition: service_healthy }
-    restart: unless-stopped
 
   web:
     build: ./frontend
+    image: shadowtrace-web
     ports:
-      - "${WEB_PORT:-8080}:80"
-    depends_on: [api]
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:80"
+    depends_on:
+      api: { condition: service_healthy }
     restart: unless-stopped
+    logging: *logging
 
 volumes:
   pgdata:

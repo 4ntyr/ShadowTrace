@@ -38,8 +38,9 @@ def burn_hash_time(pw: str) -> None:
 
 def issue_session(response: Response, user: User) -> None:
     s = get_settings()
-    exp = datetime.now(timezone.utc) + timedelta(hours=s.session_hours)
-    token = jwt.encode({"sub": str(user.id), "exp": exp}, s.secret_key, algorithm=ALGO)
+    now = datetime.now(timezone.utc)
+    exp = now + timedelta(hours=s.session_hours)
+    token = jwt.encode({"sub": str(user.id), "iat": now, "exp": exp}, s.secret_key, algorithm=ALGO)
     response.set_cookie(
         COOKIE,
         token,
@@ -60,10 +61,19 @@ def current_user_optional(request: Request, db: Session = Depends(get_db)) -> Us
     if not token:
         return None
     try:
-        payload = jwt.decode(token, get_settings().secret_key, algorithms=[ALGO])
-    except jwt.PyJWTError:
+        payload = jwt.decode(token, get_settings().secret_key, algorithms=[ALGO], options={"require": ["sub", "iat", "exp"]})
+        user = db.get(User, int(payload["sub"]))
+    except (jwt.PyJWTError, ValueError):
         return None
-    return db.get(User, int(payload["sub"]))
+    if user is None:
+        return None
+    changed = user.password_changed_at
+    if changed is not None:
+        if changed.tzinfo is None:
+            changed = changed.replace(tzinfo=timezone.utc)
+        if payload["iat"] < int(changed.timestamp()):
+            return None  # session predates a password change
+    return user
 
 
 def current_user(user: User | None = Depends(current_user_optional)) -> User:

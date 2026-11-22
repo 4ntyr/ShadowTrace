@@ -1,5 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { api, qs, type Activity } from "../lib/api";
 import { useScope } from "../lib/scope";
@@ -10,6 +11,7 @@ import { Card, Empty, ErrorBox, FavouritesEmpty, Loading, ScopeToggle } from "..
 const PAGE = 30;
 
 export default function ActivityPage() {
+  useTitle("Activity feed");
   const [scope, setScope] = useScope();
   const [params, setParams] = useSearchParams();
   const [page, setPage] = useState(0);

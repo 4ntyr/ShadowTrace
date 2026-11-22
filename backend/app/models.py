@@ -46,6 +46,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(100))
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # Sessions issued before this moment are rejected (set on password change/reset).
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     favourites: Mapped[list["Favourite"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"

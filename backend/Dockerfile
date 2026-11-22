@@ -6,6 +6,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY data ./data
 COPY scripts ./scripts
+COPY alembic.ini ./
+COPY migrations ./migrations
 RUN useradd --system --uid 10001 shadowtrace && chown -R shadowtrace /app
 USER shadowtrace
 EXPOSE 8000

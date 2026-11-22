@@ -1,3 +1,4 @@
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { api, type SourceRow } from "../lib/api";
 import { nf, timeAgo } from "../lib/format";
@@ -15,6 +16,7 @@ function Status({ s }: { s: SourceRow }) {
 const KIND_LABEL: Record<string, string> = { rss: "RSS", otx: "OTX", acled: "ACLED", gdelt: "GDELT", mitre: "MITRE", correlation: "Engine" };
 
 export default function Sources() {
+  useTitle("Data sources");
   const q = useQuery({
     queryKey: ["sources"],
     queryFn: () => api<{ sources: SourceRow[]; counts: Record<string, number>; keys: { otx: boolean; acled: boolean } }>("/api/sources"),

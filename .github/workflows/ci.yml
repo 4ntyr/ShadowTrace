@@ -10,13 +10,18 @@ jobs:
         ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 5s --health-retries 10
     defaults: { run: { working-directory: backend } }
+    env:
+      ST_TEST_DATABASE_URL: postgresql+psycopg://shadowtrace:shadowtrace@localhost:5432/shadowtrace_test
+      ST_DATABASE_URL: postgresql+psycopg://shadowtrace:shadowtrace@localhost:5432/shadowtrace_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: pip install -r requirements-dev.txt
-      - run: pytest -q
-        env: { ST_TEST_DATABASE_URL: "postgresql+psycopg://shadowtrace:shadowtrace@localhost:5432/shadowtrace_test" }
+      - name: Tests (Postgres)
+        run: pytest -q
+      - name: Models and migrations in sync
+        run: alembic check
   frontend:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: frontend } }
@@ -26,3 +31,15 @@ jobs:
         with: { node-version: "22" }
       - run: npm ci
       - run: npm run build
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker build -t shadowtrace-backend backend
+          docker build -t shadowtrace-web frontend
+      - name: Validate compose files
+        run: |
+          printf 'ST_SECRET_KEY=x\nPOSTGRES_PASSWORD=x\nST_DOMAIN=example.org\n' > .env
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q

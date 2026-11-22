@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..countries import country_name
@@ -35,7 +35,7 @@ def _base(ctx: ScopeCtx, group: str | None, db: Session):
 def list_activity(
     group: str | None = None,
     source_type: str | None = Query(None, pattern="^(rss|otx|curated)$"),
-    country: str | None = Query(None, min_length=2, max_length=2),
+    country: str | None = Query(None, pattern="^[A-Za-z]{2}$"),
     effect: str | None = None,
     q: str | None = Query(None, max_length=100),
     days: int = Query(30, ge=1, le=3650),
@@ -53,14 +53,17 @@ def list_activity(
     if q:
         like = f"%{q.lower()}%"
         stmt = stmt.where(or_(func.lower(ActivityEvent.title).like(like), func.lower(ActivityEvent.summary).like(like)))
-    rows = db.scalars(
+    if country:
+        # JSON list stored as text on every backend: match the quoted code, e.g. '"UA"'.
+        stmt = stmt.where(cast(ActivityEvent.countries, String).like(f'%"{country.upper()}"%'))
+    total = db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery()))
+    page = db.scalars(
         stmt.options(selectinload(ActivityEvent.group_links).selectinload(ActivityGroup.group))
-        .order_by(ActivityEvent.published_at.desc())
+        .order_by(ActivityEvent.published_at.desc(), ActivityEvent.id.desc())
+        .limit(limit)
+        .offset(offset)
     ).all()
-    if country:  # JSON column: filter in Python to stay portable across DBs
-        rows = [r for r in rows if country.upper() in (r.countries or [])]
-    page = rows[offset : offset + limit]
-    return {"total": len(rows), "items": [activity(r) for r in page]}
+    return {"total": total, "items": [activity(r) for r in page]}
 
 
 @router.get("/stats")

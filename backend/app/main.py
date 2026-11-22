@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from .config import get_settings
+from .config import check_runtime_settings
 from .db import init_db
 from .routers import activity, auth, graph, groups, hybrid, meta
 
@@ -13,13 +13,13 @@ log = logging.getLogger("shadowtrace")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    if get_settings().secret_key == "change-me-in-production":
-        log.warning("ST_SECRET_KEY is the default value — set a random secret before deploying.")
+    check_runtime_settings()
     init_db()
     yield
 
 
-app = FastAPI(title="ShadowTrace API", version="1.0.0", lifespan=lifespan)
+# Interactive docs are disabled: the API is internal to the web app.
+app = FastAPI(title="ShadowTrace API", version="1.0.0", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware("http")

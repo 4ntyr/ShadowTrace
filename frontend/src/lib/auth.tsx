@@ -1,9 +1,14 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type User } from "./api";
 
 export function useAuth() {
-  const q = useQuery({ queryKey: ["me"], queryFn: () => api<{ user: User | null }>("/api/auth/me"), staleTime: 60_000 });
-  return { user: q.data?.user ?? null, loading: q.isLoading };
+  const q = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api<{ user: User | null; registration_open: boolean }>("/api/auth/me"),
+    staleTime: 60_000,
+  });
+  return { user: q.data?.user ?? null, loading: q.isLoading, registrationOpen: q.data?.registration_open ?? true };
 }
 
 export function useLogout() {
@@ -23,4 +28,11 @@ export function useFavourite() {
       for (const k of ["groups", "group", "graph", "stats", "activity", "favourites", "conflict"]) qc.invalidateQueries({ queryKey: [k] });
     },
   });
+}
+
+/** Sets the browser tab title for the current page. */
+export function useTitle(title: string | undefined) {
+  useEffect(() => {
+    document.title = title ? `${title} · ShadowTrace` : "ShadowTrace · APT Tracker";
+  }, [title]);
 }

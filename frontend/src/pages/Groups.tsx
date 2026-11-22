@@ -1,5 +1,6 @@
 import { useDeferredValue } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { api, qs, type CountryRef, type GroupListItem } from "../lib/api";
 import { useScope } from "../lib/scope";
@@ -11,6 +12,7 @@ const MOTIVATIONS = ["espionage", "destructive", "financial", "mixed", "influenc
 const KINDS = ["apt", "criminal", "hacktivist", "persona"];
 
 export default function Groups() {
+  useTitle("Groups");
   const [scope, setScope] = useScope();
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";

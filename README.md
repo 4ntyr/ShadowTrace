@@ -23,27 +23,72 @@ ShadowTrace is a browser-based tracker for state-linked threat actors (APT group
 
 ---
 
-## Quick start (Docker)
+## Quick start (local, Docker)
+
+Requires Docker Engine 24+ with Compose v2.24+.
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`: set `ST_SECRET_KEY` and `POSTGRES_PASSWORD`, and optionally add OTX/ACLED keys. Then:
+Fill in `ST_SECRET_KEY` and `POSTGRES_PASSWORD` in `.env`. Generate each with
+`python3 -c "import secrets; print(secrets.token_urlsafe(48))"`. The app refuses to start with a
+weak secret. Then:
 
 ```bash
 docker compose up -d --build
 ```
 
-Open <http://localhost:8080>. On first start the worker loads the bundled MITRE ATT&CK snapshot and
-the curation files, backfills 24 h of GDELT events and polls all feeds. Activity accumulates from
-then on; RSS feeds only expose their latest items, so the dashboard fills up over the first days.
+Open <http://localhost:8080> (bound to 127.0.0.1 only). On first start the worker applies database
+migrations, loads the bundled MITRE ATT&CK snapshot and the curation files, backfills 24 h of GDELT
+events and polls all feeds. RSS feeds only expose their latest items, so the dashboard fills up over
+the first days.
 
-Make a user an admin (reserved for future curation tools):
+## Deploying to a server
 
-```bash
-docker compose exec api python -m app.cli make-admin you@example.org
-```
+The production override adds [Caddy](https://caddyserver.com) in front of the stack. It obtains and
+renews Let's Encrypt certificates automatically, redirects HTTP to HTTPS and sets HSTS. Only ports
+80 and 443 are exposed; the database, API and web containers stay on the internal Docker network.
+
+1. **Server:** any Linux host with Docker Engine 24+ and Compose v2.24+ (2 GB RAM is plenty). Open
+   ports 80 and 443 (e.g. `ufw allow 80,443/tcp`) and point a DNS A/AAAA record for your domain at it.
+2. **Get the code and configure:**
+   ```bash
+   git clone https://github.com/4ntyr/ShadowTrace.git /opt/shadowtrace
+   ```
+   ```bash
+   cd /opt/shadowtrace && cp .env.example .env && chmod 600 .env
+   ```
+   In `.env`, set `ST_SECRET_KEY` and `POSTGRES_PASSWORD`, uncomment `COMPOSE_FILE=…` and set
+   `ST_DOMAIN=your.domain`. Add the OTX/ACLED keys if you have them.
+3. **Start:**
+   ```bash
+   docker compose up -d --build
+   ```
+   The site is live at `https://your.domain` once Caddy has fetched the certificate (a few seconds).
+4. **Accounts:** for a private instance set `ST_ALLOW_REGISTRATION=false` (the UI then hides sign-up)
+   and create users on the server:
+   ```bash
+   docker compose exec api python -m app.cli create-user analyst@example.org "Analyst Name"
+   ```
+   Forgotten passwords are reset with `python -m app.cli reset-password <email>`, which also signs
+   out all of that user's sessions.
+5. **Backups:** `deploy/backup.sh` writes a compressed `pg_dump` to `backups/` and keeps 14 days.
+   Schedule it with cron:
+   ```
+   17 3 * * * cd /opt/shadowtrace && ./deploy/backup.sh >> backups/backup.log 2>&1
+   ```
+   Copy `backups/` off the server as well. To restore a dump:
+   ```bash
+   docker compose exec -T db pg_restore -U shadowtrace -d shadowtrace --clean --if-exists < backups/<file>.dump
+   ```
+6. **Updating:**
+   ```bash
+   git pull && docker compose up -d --build
+   ```
+   Database migrations run automatically on start.
+7. **Monitoring:** `docker compose ps` shows container health; the in-app *Data sources* page shows
+   each feed's last success and error. Logs: `docker compose logs -f worker` (rotated at 5×10 MB).
 
 ## Local development
 
@@ -54,11 +99,13 @@ cd backend
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 export ST_DATABASE_URL=postgresql+psycopg://shadowtrace:shadowtrace@localhost:5432/shadowtrace
-python -m app.cli init           # tables + MITRE snapshot + curation
+export ST_DEBUG=true             # allows the default dev secret; never set on a server
+python -m app.cli init           # migrations + MITRE snapshot + curation
 python -m app.cli run rss        # or: otx | gdelt | acled | correlate | mitre
 uvicorn app.main:app --reload    # API on :8000
 python -m app.worker             # (separate shell) scheduler for all feeds
 pytest -q                        # SQLite by default; set ST_TEST_DATABASE_URL for Postgres
+alembic revision --autogenerate -m "..."   # after changing app/models.py
 ```
 
 ```bash
@@ -83,6 +130,8 @@ npm run dev                      # http://localhost:5173, proxies /api to :8000
 
 | Path | What |
 |---|---|
+| `backend/migrations/` | Alembic migrations, applied automatically at startup |
+| `deploy/` | Caddyfile (HTTPS) and the backup script |
 | `backend/app/models.py` | Schema: groups, aliases, state links, relations, history, activity, military events, conflicts, hybrid links, users, favourites |
 | `backend/app/ingest/` | Connectors (`mitre`, `rss`, `otx`, `gdelt`, `acled`), alias matcher, attribution extractor, curation loader |
 | `backend/app/correlation.py` | Cyber↔kinetic scoring, daily series, lag correlation, convergence detection |
@@ -102,7 +151,9 @@ npm run dev                      # http://localhost:5173, proxies /api to :8000
 | ACLED | `ST_ACLED_USERNAME`/`ST_ACLED_PASSWORD` (free registration) | kinetic events (analyst-curated, with fatalities) | 6 h |
 
 The *Data sources* page shows each connector's health. A connector without a key shows as "Not
-configured" and is skipped; nothing breaks. The ACLED connector targets ACLED's current OAuth API
+configured" and is skipped; nothing breaks. Some publishers occasionally block automated readers
+(e.g. BleepingComputer, CISA return 403 from some networks); those sources show as failing while the
+rest keep working. Adjust the list in `backend/data/curation/feeds.yaml`. The ACLED connector targets ACLED's current OAuth API
 (`/oauth/token`, `/api/acled/read`). It has not been run against live ACLED credentials yet, so check
 the Data sources page after adding yours.
 
@@ -170,21 +221,22 @@ Israel–Iran war June 2025, Crimea/Donbas 2014–2022, Russo-Georgian war 2008.
 
 ## Security notes
 
-* Sessions are a signed JWT in an `HttpOnly`, `SameSite=Lax` cookie. Set `ST_COOKIE_SECURE=true`
-  behind HTTPS. Mutating requests also require `X-Requested-With: shadowtrace` and a JSON body, which
-  blocks cross-site form posts.
-* Passwords are hashed with bcrypt (cost 12); auth endpoints are rate-limited per IP; login does not
-  reveal whether an email exists.
-* The web container sends a strict CSP. All scripts and map data are self-hosted, so the browser
-  makes no third-party requests.
-* Report text from feeds is rendered as text, never HTML.
-* Registration can be disabled with `ST_ALLOW_REGISTRATION=false`.
+* Sessions are a signed JWT in an `HttpOnly`, `SameSite=Lax` cookie, marked `Secure` automatically
+  in the production setup. Changing or resetting a password signs out every other session.
+* Mutating requests require `X-Requested-With: shadowtrace` and a JSON body, which blocks
+  cross-site form posts.
+* Passwords are hashed with bcrypt (cost 12). Auth endpoints are rate-limited per client IP (the real
+  IP is passed through Caddy and nginx). Login does not reveal whether an email exists. Deleting an
+  account requires the password.
+* The app refuses to start with a missing or short `ST_SECRET_KEY` unless `ST_DEBUG=true`.
+* nginx sends a strict CSP and Caddy adds HSTS. All scripts and map data are self-hosted, so the
+  browser makes no third-party requests. Report text from feeds is rendered as text, never HTML.
+* Containers run as non-root (backend); the API has no public docs endpoints.
 
 ## Limitations / roadmap
 
 * Feed reports are dated by publication, which lags the actual activity. The correlator down-weights
   these, but curated activity dates remain more reliable.
 * GDELT is noisy (e.g. mis-geocoding). Prefer ACLED for analysis when you have access.
-* Schema migrations use `create_all` (additive). Add Alembic before changing existing columns.
-* Possible next steps: an in-app curation editor for admins, e-mail/webhook alerts for favourites,
-  STIX/TAXII export, MISP connector.
+* The ACLED connector has not yet been run against a live account.
+* Possible later additions: an in-app curation editor, alerts for favourites, STIX/MISP export.

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { api, type GroupDetail as GD } from "../lib/api";
@@ -23,6 +24,7 @@ export default function GroupDetail() {
   const [tab, setTab] = useState<Tab>("profile");
   const { tokens: t } = useTheme();
   const q = useQuery({ queryKey: ["group", slug], queryFn: () => api<GD>(`/api/groups/${encodeURIComponent(slug)}`) });
+  useTitle(q.data?.name);
   const g = q.data;
 
   const monthly = useMemo<EChartsOption | null>(() => {

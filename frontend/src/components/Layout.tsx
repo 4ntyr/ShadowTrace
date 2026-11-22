@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth, useLogout } from "../lib/auth";
+import ErrorBoundary from "./ErrorBoundary";
 import { useTheme } from "../lib/theme";
 import { IconActivity, IconDashboard, IconGraph, IconGroups, IconHybrid, IconMenu, IconSources } from "../lib/icons";
 
@@ -25,7 +26,7 @@ function Logo() {
 
 export default function Layout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, registrationOpen } = useAuth();
   const logout = useLogout();
   const { theme, setTheme } = useTheme();
   const loc = useLocation();
@@ -52,16 +53,16 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="sidebar-foot">
           {user ? (
             <>
-              <div style={{ fontSize: 13, minWidth: 0 }}>
-                <div style={{ fontWeight: 600 }}>{user.display_name}</div>
+              <Link to="/account" style={{ fontSize: 13, minWidth: 0, color: "inherit", textDecoration: "none" }} title="Account settings">
+                <div style={{ fontWeight: 600 }}>{user.display_name} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· Account</span></div>
                 <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
-              </div>
+              </Link>
               <button className="btn" onClick={() => logout.mutate()}>Log out</button>
             </>
           ) : (
             <div style={{ display: "flex", gap: 8 }}>
               <Link className="btn primary" to="/login">Log in</Link>
-              <Link className="btn" to="/register">Sign up</Link>
+              {registrationOpen && <Link className="btn" to="/register">Sign up</Link>}
             </div>
           )}
           <button className="btn ghost" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle colour theme">
@@ -69,7 +70,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </nav>
-      <main className="main">{children}</main>
+      <main className="main"><ErrorBoundary key={loc.pathname}>{children}</ErrorBoundary></main>
     </div>
   );
 }

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ST_", env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://shadowtrace:shadowtrace@localhost:5432/shadowtrace"
+    # Development mode relaxes the startup checks below. Never enable on a server.
+    debug: bool = False
 
     # Auth
     secret_key: str = "change-me-in-production"
@@ -50,3 +52,19 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+WEAK_SECRETS = {"change-me-in-production", "change-me", "secret", "changeme", ""}
+
+
+def check_runtime_settings() -> None:
+    """Refuse to run with an unsafe configuration unless ST_DEBUG=true."""
+    s = get_settings()
+    if s.debug:
+        return
+    if s.secret_key in WEAK_SECRETS or len(s.secret_key) < 32:
+        raise RuntimeError(
+            "ST_SECRET_KEY must be set to a random value of at least 32 characters "
+            "(python -c \"import secrets; print(secrets.token_urlsafe(48))\"). "
+            "For local development set ST_DEBUG=true instead."
+        )

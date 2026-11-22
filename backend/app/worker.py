@@ -6,6 +6,7 @@ import sys
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from .config import check_runtime_settings
 from .db import SessionLocal, init_db
 from .ingest.runner import JOBS, bootstrap
 
@@ -34,6 +35,9 @@ def _run(name: str) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    for noisy in ("apscheduler", "httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+    check_runtime_settings()
     init_db()
     db = SessionLocal()
     try:

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { api, qs, type GraphEdge, type GraphNode } from "../lib/api";
@@ -13,6 +14,7 @@ import { esc, tooltip } from "../components/chartkit";
 const CONF_OPACITY: Record<string, number> = { confirmed: 0.95, high: 0.7, medium: 0.5, low: 0.28 };
 
 export default function Graph() {
+  useTitle("Relations");
   const [scope, setScope] = useScope();
   const [minConf, setMinConf] = useState("low");
   const [targets, setTargets] = useState(false);

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
@@ -24,6 +26,15 @@ class RegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=10, max_length=128)
     display_name: str = Field(min_length=1, max_length=80)
+
+
+class PasswordChangeIn(BaseModel):
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=10, max_length=128)
+
+
+class PasswordConfirmIn(BaseModel):
+    password: str = Field(max_length=128)
 
 
 class LoginIn(BaseModel):
@@ -68,11 +79,28 @@ def logout(response: Response):
 
 @router.get("/me")
 def me(user: User | None = Depends(current_user_optional)):
-    return {"user": user_out(user) if user else None}
+    return {"user": user_out(user) if user else None, "registration_open": get_settings().allow_registration}
 
 
-@router.delete("/me", status_code=204)
-def delete_account(response: Response, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    db.delete(db.merge(user))
+@router.post("/password", status_code=204, dependencies=[Depends(auth_limiter)])
+def change_password(
+    body: PasswordChangeIn, response: Response, user: User = Depends(current_user), db: Session = Depends(get_db)
+):
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Current password is incorrect")
+    user.password_hash = hash_password(body.new_password)
+    # Truncate to whole seconds: JWT iat has second resolution, so the new session must not predate it.
+    user.password_changed_at = datetime.now(timezone.utc).replace(microsecond=0)
+    db.commit()
+    issue_session(response, user)  # keep this session, invalidate all others
+
+
+@router.post("/delete-account", status_code=204, dependencies=[Depends(auth_limiter)])
+def delete_account(
+    body: PasswordConfirmIn, response: Response, user: User = Depends(current_user), db: Session = Depends(get_db)
+):
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Password is incorrect")
+    db.delete(user)
     db.commit()
     clear_session(response)

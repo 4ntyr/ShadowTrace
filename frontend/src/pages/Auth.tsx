@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type User } from "../lib/api";
+import { useAuth, useTitle } from "../lib/auth";
 import { Card, ErrorBox } from "../components/ui";
 
 export default function Auth({ mode }: { mode: "login" | "register" }) {
@@ -10,6 +11,8 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
   const [name, setName] = useState("");
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { registrationOpen } = useAuth();
+  useTitle(mode === "login" ? "Log in" : "Sign up");
   const m = useMutation({
     mutationFn: () => api<User>(`/api/auth/${mode}`, {
       method: "POST",
@@ -19,6 +22,16 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
   });
   const submit = (e: FormEvent) => { e.preventDefault(); m.mutate(); };
 
+  if (mode === "register" && !registrationOpen) {
+    return (
+      <div className="auth-wrap">
+        <Card title="Registration is closed">
+          <p className="secondary" style={{ marginTop: 0 }}>New accounts are created by the administrator of this ShadowTrace instance.</p>
+          <Link className="btn primary" to="/login">Log in</Link>
+        </Card>
+      </div>
+    );
+  }
   return (
     <div className="auth-wrap">
       <Card title={mode === "login" ? "Log in" : "Create an account"} sub="An account lets you follow favourite groups across devices.">
@@ -35,7 +48,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
           {m.error && <ErrorBox error={m.error} />}
           <button className="btn primary" type="submit" disabled={m.isPending}>{mode === "login" ? "Log in" : "Create account"}</button>
           <p className="subtle" style={{ margin: 0 }}>
-            {mode === "login" ? <>No account? <Link to="/register">Sign up</Link></> : <>Already registered? <Link to="/login">Log in</Link></>}
+            {mode === "login" ? (registrationOpen ? <>No account? <Link to="/register">Sign up</Link></> : "Accounts are created by the administrator.") : <>Already registered? <Link to="/login">Log in</Link></>}
           </p>
         </form>
       </Card>

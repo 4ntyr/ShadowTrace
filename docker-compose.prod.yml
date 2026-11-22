@@ -1,0 +1,31 @@
+# Production override: Caddy in front with automatic HTTPS (Let's Encrypt).
+# Requires ST_DOMAIN in .env and DNS for that domain pointing at this server; ports 80 and 443 open.
+services:
+  api:
+    environment:
+      ST_COOKIE_SECURE: "true"
+
+  web:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2.8-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ST_DOMAIN: ${ST_DOMAIN:?set ST_DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+volumes:
+  caddy_data:
+  caddy_config:

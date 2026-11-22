@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { api, type ConflictBrief } from "../lib/api";
 import { fmtDate, nf } from "../lib/format";
@@ -6,6 +7,7 @@ import { useTheme } from "../lib/theme";
 import { Card, ErrorBox, Loading } from "../components/ui";
 
 export default function Hybrid() {
+  useTitle("Hybrid warfare");
   const q = useQuery({ queryKey: ["conflicts"], queryFn: () => api<ConflictBrief[]>("/api/hybrid/conflicts") });
   const { tokens: t } = useTheme();
   const groups = [

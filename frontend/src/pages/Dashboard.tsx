@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTitle } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
 import { api, qs, type Activity, type ConflictBrief, type Stats } from "../lib/api";
@@ -13,6 +14,7 @@ import { Card, Empty, ErrorBox, FavouritesEmpty, Loading, ScopeToggle, Segmented
 import { esc, roundedTop, timeAxis, tooltip, valueAxis } from "../components/chartkit";
 
 export default function Dashboard() {
+  useTitle("Dashboard");
   const [scope, setScope] = useScope();
   const [days, setDays] = useState(90);
   const { tokens: t } = useTheme();

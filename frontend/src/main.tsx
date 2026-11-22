@@ -17,6 +17,7 @@ const Hybrid = lazy(() => import("./pages/Hybrid"));
 const ConflictPage = lazy(() => import("./pages/ConflictPage"));
 const Sources = lazy(() => import("./pages/Sources"));
 const Auth = lazy(() => import("./pages/Auth"));
+const Account = lazy(() => import("./pages/Account"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Layout>
             <Suspense fallback={<Loading h={400} />}>
               <Routes>
@@ -46,6 +47,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/sources" element={<Sources />} />
                 <Route path="/login" element={<Auth mode="login" />} />
                 <Route path="/register" element={<Auth mode="register" />} />
+                <Route path="/account" element={<Account />} />
                 <Route path="*" element={<div className="empty">Page not found.</div>} />
               </Routes>
             </Suspense>

@@ -1,0 +1,166 @@
+# Conflicts tracked by the hybrid-warfare correlator.
+#
+# theatre:   ISO2 countries where kinetic events are collected (ACLED/GDELT) and matched.
+# parties:   belligerent sides; a group attributed to a party's country counts as that side's actor.
+# groups:    extra groups (by name) to treat as participants regardless of state links.
+# acled_countries: ACLED country names to query (defaults to theatre country names).
+#
+# cyber_events / kinetic_events are curated, sourced anchor events. `links` pairs them where
+# public reporting explicitly connects the cyber and kinetic action. The automatic correlator adds
+# further candidate links from live feeds; those are scored and labelled "auto".
+
+conflicts:
+  - slug: russia-ukraine-war
+    name: Russia–Ukraine war
+    status: active
+    start: 2022-02-24
+    window_days: 3
+    theatre: [UA, RU]
+    parties:
+      - {name: Russia, countries: [RU, BY]}
+      - {name: Ukraine, countries: [UA]}
+    groups: [IT Army of Ukraine, Killnet, Cyber Army of Russia Reborn]
+    description: >-
+      The most extensive real-world case of cyber operations running alongside a conventional war: wipers,
+      grid and telecom attacks timed with missile campaigns, satellite-modem sabotage at H-hour, and
+      volunteer "IT armies" on both sides.
+    cyber_events:
+      - {key: hermeticwiper, date: 2022-02-23, title: "HermeticWiper and DDoS hit Ukrainian organisations hours before invasion",
+         effect: disruptive, countries: [UA], attributed: [RU], sectors: [government, finance],
+         source_name: "ESET / CISA", url: "https://www.welivesecurity.com/2022/02/24/hermeticwiper-new-data-wiping-malware-hits-ukraine/"}
+      - {key: viasat, date: 2022-02-24, title: "Viasat KA-SAT modems wiped (AcidRain)",
+         effect: disruptive, countries: [UA, DE, FR], attributed: [RU], sectors: [telecommunications, military communications],
+         summary: "Tens of thousands of satellite modems bricked about an hour after the invasion began, degrading Ukrainian military communications and disabling 5,800 German wind turbines' remote monitoring. Attributed to Russia by the EU, UK and US on 10 May 2022.",
+         source_name: "EU / UK NCSC attribution, May 2022"}
+      - {key: industroyer2, date: 2022-04-08, title: "Industroyer2 attack on high-voltage substations thwarted",
+         effect: disruptive, countries: [UA], groups: [Sandworm Team], sectors: [energy],
+         source_name: "CERT-UA / ESET", url: "https://www.welivesecurity.com/2022/04/12/industroyer2-industroyer-reloaded/"}
+      - {key: oct2022-ot, date: 2022-10-10, title: "Sandworm OT attack trips substations during missile barrage",
+         effect: disruptive, countries: [UA], groups: [Sandworm Team], sectors: [energy],
+         source_name: "Mandiant, Nov 2023"}
+      - {key: kyivstar, date: 2023-12-12, title: "Kyivstar mobile network destroyed",
+         effect: disruptive, countries: [UA], groups: [Sandworm Team], sectors: [telecommunications],
+         summary: "Service cut for ~24 million subscribers; air-raid alert systems in some regions were affected."}
+    kinetic_events:
+      - {key: invasion, date: 2022-02-24, title: "Russia launches full-scale invasion of Ukraine",
+         country: UA, location: Kyiv, lat: 50.45, lon: 30.52, type: "Battles", fatalities: null, intensity: 1.0}
+      - {key: oct10-strikes, date: 2022-10-10, title: "Mass missile strikes on Ukrainian energy infrastructure",
+         country: UA, location: Kyiv, lat: 50.45, lon: 30.52, type: "Explosions/Remote violence", intensity: 0.9}
+    links:
+      - {cyber: hermeticwiper, kinetic: invasion, rationale: "Wiper and DDoS wave in the final hours before the ground invasion, degrading government and banking systems."}
+      - {cyber: viasat, kinetic: invasion, rationale: "Satellite-modem sabotage timed to H-hour of the invasion; affected Ukrainian military command communications."}
+      - {cyber: oct2022-ot, kinetic: oct10-strikes, rationale: "Mandiant reported the OT-induced outage coincided with mass missile strikes against Ukrainian critical infrastructure."}
+
+  - slug: crimea-donbas-2014
+    name: Crimea annexation & Donbas war (2014–2022)
+    status: historical
+    start: 2014-02-20
+    end: 2022-02-23
+    window_days: 3
+    theatre: [UA]
+    parties:
+      - {name: Russia, countries: [RU]}
+      - {name: Ukraine, countries: [UA]}
+    description: >-
+      The prototype of modern Russian hybrid warfare: seizure of Crimean telecom infrastructure alongside
+      unmarked troops, election interference, and the first grid-disrupting cyberattacks.
+    cyber_events:
+      - {key: crimea-telecom, date: 2014-02-28, title: "Crimean telecom nodes seized, cables tampered",
+         effect: disruptive, countries: [UA], attributed: [RU], sectors: [telecommunications],
+         summary: "Ukrtelecom reported that unidentified armed men seized its Crimean facilities and damaged fibre cables, cutting the peninsula off from mainland networks."}
+      - {key: cec-2014, date: 2014-05-22, title: "CyberBerkut attack on Ukraine's Central Election Commission",
+         effect: disruptive, countries: [UA], attributed: [RU], sectors: [elections],
+         summary: "Destructive intrusion days before the 25 May 2014 presidential election; vendors later linked CyberBerkut to APT28."}
+      - {key: grid-2015, date: 2015-12-23, title: "First grid-disrupting cyberattack (BlackEnergy)", effect: disruptive,
+         countries: [UA], groups: [Sandworm Team], sectors: [energy]}
+      - {key: grid-2016, date: 2016-12-17, title: "Industroyer hits Kyiv substation", effect: disruptive,
+         countries: [UA], groups: [Sandworm Team], sectors: [energy]}
+      - {key: notpetya, date: 2017-06-27, title: "NotPetya", effect: disruptive,
+         countries: [UA], groups: [Sandworm Team], sectors: [all]}
+    kinetic_events:
+      - {key: crimea-parliament, date: 2014-02-27, title: "Armed men seize Crimean parliament",
+         country: UA, location: Simferopol, lat: 44.95, lon: 34.10, type: "Strategic developments", intensity: 0.7}
+    links:
+      - {cyber: crimea-telecom, kinetic: crimea-parliament, rationale: "Physical seizure of telecom infrastructure accompanied the takeover of Crimean government buildings, isolating the peninsula's communications."}
+
+  - slug: russia-georgia-2008
+    name: Russo-Georgian war (2008)
+    status: historical
+    start: 2008-07-20
+    end: 2008-08-16
+    window_days: 2
+    theatre: [GE]
+    parties:
+      - {name: Russia, countries: [RU]}
+      - {name: Georgia, countries: [GE]}
+    description: >-
+      Widely cited as the first war in which coordinated cyberattacks accompanied conventional military
+      operations: DDoS and defacements against Georgian government, media and banking sites ran alongside the
+      ground offensive.
+    cyber_events:
+      - {key: ddos-july, date: 2008-07-20, title: "DDoS on Georgian president's website", effect: ddos,
+         countries: [GE], attributed: [RU], sectors: [government]}
+      - {key: ddos-aug, date: 2008-08-08, title: "Coordinated DDoS and defacements on Georgian government, media and banks",
+         effect: ddos, countries: [GE], attributed: [RU], sectors: [government, media, finance],
+         summary: "Organised via Russian-language forums (e.g. StopGeorgia.ru) that distributed target lists and tools."}
+    kinetic_events:
+      - {key: war-start, date: 2008-08-08, title: "Russian forces enter South Ossetia",
+         country: GE, location: Tskhinvali, lat: 42.23, lon: 43.97, type: "Battles", intensity: 1.0}
+    links:
+      - {cyber: ddos-aug, kinetic: war-start, rationale: "Large-scale DDoS began on the same day as the Russian ground offensive."}
+
+  - slug: israel-iran-2025
+    name: Israel–Iran war (June 2025)
+    status: historical
+    start: 2025-06-13
+    end: 2025-06-24
+    window_days: 3
+    theatre: [IR, IL]
+    parties:
+      - {name: Israel / US, countries: [IL, US]}
+      - {name: Iran, countries: [IR]}
+    description: >-
+      Twelve days of Israeli and US strikes on Iranian military and nuclear sites, with Iranian missile
+      retaliation, accompanied by destructive attacks on Iran's financial system and broadcast hijacking.
+    cyber_events:
+      - {key: sepah, date: 2025-06-17, title: "Predatory Sparrow destroys Bank Sepah data", effect: disruptive,
+         countries: [IR], groups: [Predatory Sparrow], sectors: [finance]}
+      - {key: nobitex, date: 2025-06-18, title: "Predatory Sparrow burns ~US$90M at Nobitex", effect: disruptive,
+         countries: [IR], groups: [Predatory Sparrow], sectors: [cryptocurrency]}
+      - {key: irib-hijack, date: 2025-06-18, title: "Iranian state TV satellite feed hijacked", effect: influence,
+         countries: [IR], sectors: [media],
+         summary: "IRIB satellite broadcasts were interrupted with protest footage and calls to rise up; no official attribution."}
+    kinetic_events:
+      - {key: rising-lion, date: 2025-06-13, title: "Israel launches strikes on Iranian nuclear and military sites",
+         country: IR, location: Tehran / Natanz, lat: 35.69, lon: 51.39, type: "Explosions/Remote violence", intensity: 1.0}
+      - {key: irib-strike, date: 2025-06-16, title: "Israeli strike on IRIB headquarters during live broadcast",
+         country: IR, location: Tehran, lat: 35.78, lon: 51.41, type: "Explosions/Remote violence", intensity: 0.6}
+      - {key: midnight-hammer, date: 2025-06-22, title: "US strikes Fordow, Natanz and Isfahan",
+         country: IR, location: Fordow, lat: 34.88, lon: 50.99, type: "Explosions/Remote violence", intensity: 1.0}
+    links:
+      - {cyber: sepah, kinetic: rising-lion, rationale: "Destructive attack on a bank tied to the IRGC during the Israeli air campaign."}
+      - {cyber: nobitex, kinetic: rising-lion, rationale: "Exchange accused of sanctions evasion targeted during the air campaign."}
+      - {cyber: irib-hijack, kinetic: irib-strike, rationale: "State broadcaster struck kinetically and then hijacked in the information space two days later."}
+
+  - slug: israel-hamas-regional
+    name: Israel–Hamas war & regional escalation
+    status: active
+    start: 2023-10-07
+    window_days: 3
+    theatre: [IL, PS, LB, YE, IR]
+    parties:
+      - {name: Israel, countries: [IL]}
+      - {name: Hamas / "Axis of Resistance", countries: [PS, LB, YE, IR]}
+    groups: [CyberAv3ngers]
+    description: >-
+      Conflict that began with the 7 October 2023 Hamas attack; Iranian and pro-Iranian cyber personas
+      targeted Israeli and Western infrastructure while Israel-linked actors hit Iranian services.
+    cyber_events:
+      - {key: unitronics, date: 2023-11-25, title: "CyberAv3ngers tamper with Israeli-made PLCs at water utilities",
+         effect: disruptive, countries: [US, IL], groups: [CyberAv3ngers], sectors: [water]}
+      - {key: fuel-2023, date: 2023-12-18, title: "Predatory Sparrow disrupts Iranian petrol stations",
+         effect: disruptive, countries: [IR], groups: [Predatory Sparrow], sectors: [energy]}
+    kinetic_events:
+      - {key: oct7, date: 2023-10-07, title: "Hamas-led attack on southern Israel",
+         country: IL, location: Gaza envelope, lat: 31.40, lon: 34.45, type: "Violence against civilians", fatalities: 1200, intensity: 1.0}
+    links: []

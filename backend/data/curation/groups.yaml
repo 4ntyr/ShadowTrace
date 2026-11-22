@@ -1,0 +1,564 @@
+# Curated enrichment layered on top of MITRE ATT&CK.
+#
+# `match` is the MITRE group name or any alias. If nothing matches, the group is created as a
+# curated-only group (e.g. hacktivist personas that ATT&CK does not track).
+#
+# states[].relation:   sponsor | operated_by | aligned | alleged
+# states[].confidence: confirmed (government attribution / indictment / sanctions)
+#                      high (consistent multi-vendor assessment) | medium | low
+# relations[].type:    subgroup | overlap | collaboration | shared_tooling | same_agency | persona
+#
+# Keep claims sourced. Prefer government attributions; label vendor-only assessments as such.
+
+groups:
+  # ───────────────────────────── Russia ─────────────────────────────
+  - match: APT28
+    motivation: espionage
+    summary: >-
+      Russian military intelligence (GRU) unit conducting political and military espionage, hack-and-leak
+      influence operations and, occasionally, close-access operations against NATO governments, militaries,
+      elections and international organisations.
+    target_countries: [US, UA, DE, FR, GB, PL, GE, NL]
+    target_sectors: [government, military, political parties, media, international organisations]
+    states:
+      - {country: RU, relation: operated_by, agency: "GRU Unit 26165 (85th Main Special Service Center)", confidence: confirmed,
+         source_name: "US DOJ indictment, 13 Jul 2018", source_url: "https://www.justice.gov/opa/pr/grand-jury-indicts-12-russian-intelligence-officers-hacking-offenses-related-2016-election"}
+    relations:
+      - {target: Sandworm Team, type: same_agency, description: "Both are GRU units (26165 and 74455); the 2018 DOJ indictment charged officers of both units.", confidence: confirmed}
+    history:
+      - {date: 2015-04-08, title: "TV5Monde broadcast sabotage", kind: operation,
+         description: "French broadcaster TV5Monde taken off air under a fake 'CyberCaliphate' persona; French investigators later linked the attack to APT28.", source_name: "ANSSI / press reporting"}
+      - {date: 2015-05-01, precision: month, title: "German Bundestag network compromise", kind: operation,
+         description: "Intrusion into the Bundestag network; Germany later issued an arrest warrant for a GRU officer and the EU imposed sanctions (Oct 2020).", source_name: "EU Council sanctions, Oct 2020"}
+      - {date: 2016-04-01, precision: month, title: "DNC / DCCC hack-and-leak", kind: operation,
+         description: "Theft of Democratic Party emails and their release through DCLeaks and Guccifer 2.0 personas ahead of the 2016 US election."}
+      - {date: 2018-04-13, title: "OPCW close-access operation disrupted", kind: disclosure,
+         description: "Dutch MIVD disrupted four GRU officers attempting to hack the OPCW's Wi-Fi in The Hague; publicly disclosed in October 2018."}
+      - {date: 2018-07-13, title: "US indictment of 12 GRU officers", kind: indictment,
+         source_url: "https://www.justice.gov/opa/pr/grand-jury-indicts-12-russian-intelligence-officers-hacking-offenses-related-2016-election"}
+      - {date: 2024-05-03, title: "Germany attributes SPD email campaign", kind: disclosure,
+         description: "German government publicly attributed the 2023 compromise of SPD executive email accounts (Outlook CVE-2023-23397) to APT28."}
+
+  - match: APT29
+    motivation: espionage
+    summary: >-
+      Russian foreign intelligence (SVR) actor focused on long-term, stealthy intelligence collection from
+      governments, diplomatic bodies, think tanks and technology supply chains.
+    target_countries: [US, GB, DE, UA, PL, NL, BE]
+    target_sectors: [government, diplomacy, think tanks, technology, healthcare]
+    states:
+      - {country: RU, relation: operated_by, agency: "Foreign Intelligence Service (SVR)", confidence: confirmed,
+         source_name: "US/UK attribution of SolarWinds compromise, 15 Apr 2021"}
+    history:
+      - {date: 2020-07-16, title: "COVID-19 vaccine research targeted", kind: disclosure,
+         description: "UK NCSC, Canada CSE and US NSA jointly warned that APT29 was targeting vaccine research organisations."}
+      - {date: 2020-12-13, title: "SolarWinds SUNBURST supply-chain compromise disclosed", kind: disclosure,
+         description: "Trojanised Orion updates gave access to ~18,000 organisations; a small subset of high-value government and technology targets was exploited."}
+      - {date: 2021-04-15, title: "US and UK formally attribute SolarWinds to SVR", kind: sanction}
+      - {date: 2024-01-19, title: "Microsoft corporate email breach disclosed", kind: disclosure,
+         description: "Microsoft disclosed that Midnight Blizzard accessed senior leadership mailboxes via a password-spray of a legacy test tenant."}
+
+  - match: Sandworm Team
+    motivation: destructive
+    summary: >-
+      GRU's most destructive unit: power-grid attacks in Ukraine, NotPetya, Olympic Destroyer, and wartime
+      operations synchronised with Russian military objectives. Tracked by Google/Mandiant as APT44.
+    target_countries: [UA, GE, US, FR, KR, PL]
+    target_sectors: [energy, telecommunications, government, logistics, media]
+    states:
+      - {country: RU, relation: operated_by, agency: "GRU Unit 74455 (Main Center for Special Technologies, GTsST)", confidence: confirmed,
+         source_name: "US DOJ indictment, 19 Oct 2020", source_url: "https://www.justice.gov/opa/pr/six-russian-gru-officers-charged-connection-worldwide-deployment-destructive-malware-and"}
+    history:
+      - {date: 2015-12-23, title: "Ukrainian power grid attack (BlackEnergy)", kind: operation,
+         description: "First publicly confirmed cyberattack to cause a power outage: ~225,000 customers in western Ukraine lost power."}
+      - {date: 2016-12-17, title: "Industroyer / CrashOverride hits Kyiv substation", kind: operation,
+         description: "Purpose-built grid malware caused an outage in part of Kyiv."}
+      - {date: 2017-06-27, title: "NotPetya", kind: operation,
+         description: "Destructive worm seeded via Ukrainian accounting software M.E.Doc; global damages estimated above US$10 billion."}
+      - {date: 2018-02-09, title: "Olympic Destroyer", kind: operation,
+         description: "Wiper attack on the PyeongChang Winter Olympics opening ceremony with false flags pointing at North Korea."}
+      - {date: 2019-10-28, title: "Mass defacement of Georgian websites", kind: operation,
+         description: "~15,000 Georgian websites defaced and broadcasters disrupted; attributed to GRU by UK, US and others in Feb 2020."}
+      - {date: 2020-10-19, title: "US indictment of six Unit 74455 officers", kind: indictment}
+      - {date: 2022-04-08, title: "Industroyer2 attack on Ukrainian grid thwarted", kind: operation,
+         description: "Attempted attack on high-voltage substations, detected and stopped with CERT-UA and ESET."}
+      - {date: 2022-10-10, title: "OT attack causes outage alongside missile strikes", kind: operation,
+         description: "Mandiant reported a Sandworm OT intrusion that tripped substations and caused an unplanned outage coinciding with mass Russian missile strikes on Ukrainian energy infrastructure."}
+      - {date: 2023-12-12, title: "Kyivstar telecom destruction", kind: operation,
+         description: "Destructive attack on Ukraine's largest mobile operator, cutting service for ~24 million subscribers; attributed by SBU to Sandworm."}
+
+  - match: Turla
+    motivation: espionage
+    summary: >-
+      Long-running FSB espionage actor known for sophisticated implants (Snake, Kazuar), satellite-link
+      command and control and hijacking other actors' infrastructure.
+    target_countries: [UA, US, DE, FR, AT, IR]
+    target_sectors: [government, diplomacy, military, research]
+    states:
+      - {country: RU, relation: operated_by, agency: "FSB Center 16", confidence: confirmed,
+         source_name: "CISA/FBI advisory AA23-129A (Snake), 9 May 2023", source_url: "https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-129a"}
+    relations:
+      - {target: OilRig, type: shared_tooling, description: "Turla hijacked OilRig infrastructure and tools to run its own operations (UK NCSC / US NSA advisory, Oct 2019).", confidence: confirmed}
+      - {target: Dragonfly, type: same_agency, description: "Both attributed to FSB Center 16.", confidence: confirmed}
+    history:
+      - {date: 2008-10-01, precision: month, title: "agent.btz in US military networks", kind: operation,
+         description: "Worm spread via USB through US DoD classified networks (Operation Buckshot Yankee response); widely linked by researchers to Turla tooling."}
+      - {date: 2019-10-21, title: "NCSC/NSA expose OilRig infrastructure hijack", kind: disclosure}
+      - {date: 2023-05-09, title: "Operation MEDUSA dismantles Snake network", kind: disclosure,
+         description: "FBI used a court-authorised tool to disable Snake implants worldwide."}
+
+  - match: Gamaredon Group
+    motivation: espionage
+    summary: >-
+      High-tempo FSB espionage actor almost exclusively focused on Ukrainian government, military and law
+      enforcement; noisy but persistent, it often acts as initial access for other Russian operators.
+    target_countries: [UA]
+    target_sectors: [government, military, law enforcement]
+    states:
+      - {country: RU, relation: operated_by, agency: "FSB (Crimea department)", confidence: confirmed,
+         source_name: "SBU disclosure naming FSB officers, 4 Nov 2021"}
+    relations:
+      - {target: Turla, type: collaboration, description: "ESET observed Gamaredon tooling deploying Turla's Kazuar backdoor on Ukrainian machines (2025).", confidence: medium,
+         source_name: "ESET Research, 2025"}
+
+  - match: Dragonfly
+    motivation: espionage
+    summary: >-
+      FSB actor (Energetic Bear) known for years of reconnaissance and access operations against energy-sector
+      and industrial control system operators in the US and Europe.
+    target_countries: [US, DE, GB, TR, ES]
+    target_sectors: [energy, industrial control systems, aviation]
+    states:
+      - {country: RU, relation: operated_by, agency: "FSB Center 16", confidence: confirmed,
+         source_name: "US DOJ indictments, 24 Mar 2022"}
+
+  - match: TEMP.Veles
+    motivation: destructive
+    summary: >-
+      Actor behind TRITON/TRISIS, malware built to disable safety instrumented systems at a petrochemical
+      plant: one of the most dangerous ICS attacks known.
+    target_countries: [SA]
+    target_sectors: [petrochemical, industrial control systems]
+    states:
+      - {country: RU, relation: operated_by, agency: "Central Scientific Research Institute of Chemistry and Mechanics (CNIIHM)", confidence: confirmed,
+         source_name: "US Treasury sanctions, 23 Oct 2020"}
+
+  - match: Ember Bear
+    motivation: destructive
+    summary: >-
+      GRU unit responsible for the WhisperGate wiper attacks on Ukraine ahead of the 2022 invasion and for
+      later sabotage and scanning operations against NATO members.
+    target_countries: [UA, US, PL, MD]
+    target_sectors: [government, critical infrastructure, transportation]
+    states:
+      - {country: RU, relation: operated_by, agency: "GRU Unit 29155", confidence: confirmed,
+         source_name: "CISA advisory AA24-249A and DOJ indictment, 5 Sep 2024", source_url: "https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-249a"}
+    relations:
+      - {target: Sandworm Team, type: same_agency, description: "Separate GRU units with overlapping wartime focus on Ukraine.", confidence: confirmed}
+    history:
+      - {date: 2022-01-13, title: "WhisperGate wiper and defacements", kind: operation,
+         description: "Wiper disguised as ransomware hit Ukrainian government systems while ~70 government websites were defaced."}
+      - {date: 2024-09-05, title: "US indicts five GRU 29155 officers", kind: indictment}
+
+  - match: Star Blizzard
+    motivation: espionage
+    summary: >-
+      FSB spear-phishing and hack-and-leak actor (aka COLDRIVER / Callisto) targeting politicians, academics,
+      journalists and NGOs in the UK, US and NATO states.
+    target_countries: [GB, US, UA]
+    target_sectors: [government, politics, academia, NGOs, defence]
+    states:
+      - {country: RU, relation: operated_by, agency: "FSB Centre 18", confidence: confirmed,
+         source_name: "UK NCSC attribution, 7 Dec 2023"}
+    relations:
+      - {target: Turla, type: same_agency, description: "Both are FSB units (Centre 18 and Centre 16 respectively).", confidence: confirmed}
+
+  - match: Killnet
+    name: Killnet
+    kind: hacktivist
+    motivation: hacktivism
+    summary: >-
+      Pro-Russian hacktivist collective that emerged in early 2022 and ran DDoS campaigns against
+      governments, airports and hospitals of states supporting Ukraine.
+    target_countries: [LT, US, DE, IT, RO, PL]
+    target_sectors: [government, transportation, healthcare]
+    states:
+      - {country: RU, relation: aligned, confidence: medium, note: "Ideologically aligned; no confirmed state tasking."}
+    history:
+      - {date: 2022-06-27, title: "DDoS campaign against Lithuania", kind: operation,
+         description: "Retaliation for Lithuania's restrictions on sanctioned goods transiting to Kaliningrad."}
+      - {date: 2022-10-10, title: "DDoS against US airport websites", kind: operation}
+
+  - match: Cyber Army of Russia Reborn
+    name: Cyber Army of Russia Reborn
+    kind: persona
+    motivation: hacktivism
+    summary: >-
+      "Hacktivist" Telegram persona claiming DDoS and OT tampering (e.g. US water utilities) whose channels
+      Mandiant assessed were used by Sandworm/APT44.
+    target_countries: [US, PL, FR, UA]
+    target_sectors: [water, energy, government]
+    states:
+      - {country: RU, relation: aligned, confidence: high, note: "Members sanctioned by US Treasury in July 2024."}
+    relations:
+      - {target: Sandworm Team, type: persona, description: "Mandiant assessed the persona's Telegram channels were created/used by APT44.", confidence: medium,
+         source_name: "Mandiant APT44 report, Apr 2024"}
+
+  # ───────────────────────────── Ukraine ─────────────────────────────
+  - match: IT Army of Ukraine
+    name: IT Army of Ukraine
+    aliases: [IT Army]
+    kind: hacktivist
+    motivation: hacktivism
+    first_seen: 2022-02-26
+    summary: >-
+      Volunteer cyber force announced by Ukraine's Ministry of Digital Transformation two days after the
+      invasion; coordinates DDoS and disruption campaigns against Russian targets via Telegram.
+    target_countries: [RU, BY]
+    target_sectors: [government, finance, telecommunications, media]
+    states:
+      - {country: UA, relation: aligned, confidence: confirmed, note: "Publicly launched by Ukraine's Vice Prime Minister Mykhailo Fedorov on 26 Feb 2022."}
+
+  # ───────────────────────────── China ─────────────────────────────
+  - match: APT1
+    motivation: espionage
+    summary: >-
+      PLA unit behind industrial-scale intellectual-property theft from English-speaking countries;
+      exposed by Mandiant's 2013 APT1 report.
+    target_countries: [US, GB, CA]
+    target_sectors: [aerospace, energy, manufacturing, technology]
+    states:
+      - {country: CN, relation: operated_by, agency: "PLA Unit 61398 (3rd Department)", confidence: confirmed,
+         source_name: "US DOJ indictment, 19 May 2014"}
+    history:
+      - {date: 2013-02-18, title: "Mandiant APT1 report", kind: disclosure}
+      - {date: 2014-05-19, title: "US indicts five PLA officers", kind: indictment}
+
+  - match: APT41
+    motivation: mixed
+    summary: >-
+      Chinese contractor ecosystem conducting state-directed espionage alongside financially motivated
+      intrusions (gaming, supply chain).
+    target_countries: [US, TW, JP, IN, GB]
+    target_sectors: [healthcare, telecommunications, technology, video games, government]
+    states:
+      - {country: CN, relation: sponsor, agency: "Contractors linked to the Ministry of State Security (Chengdu 404)", confidence: confirmed,
+         source_name: "US DOJ indictments, 16 Sep 2020"}
+    relations:
+      - {target: Winnti Group, type: overlap, description: "Shared tooling and infrastructure; vendors historically grouped both under 'Winnti'.", confidence: medium}
+
+  - match: menuPass
+    motivation: espionage
+    summary: >-
+      MSS-linked actor (APT10) behind Operation Cloud Hopper, which compromised managed service providers to
+      reach their customers.
+    target_countries: [US, JP, GB, IN]
+    target_sectors: [managed service providers, technology, government, healthcare]
+    states:
+      - {country: CN, relation: operated_by, agency: "MSS Tianjin State Security Bureau", confidence: confirmed,
+         source_name: "US DOJ indictment, 20 Dec 2018"}
+    history:
+      - {date: 2017-04-03, title: "Operation Cloud Hopper exposed", kind: disclosure,
+         description: "PwC and BAE Systems published their report on the MSP supply-chain campaign."}
+      - {date: 2018-12-20, title: "US indictment of two APT10 members", kind: indictment}
+
+  - match: Leviathan
+    motivation: espionage
+    summary: >-
+      MSS Hainan-based actor (APT40) targeting maritime, defence and government entities, especially around
+      the South China Sea and the Indo-Pacific.
+    target_countries: [US, AU, MY, KH, PH, VN]
+    target_sectors: [maritime, defence, government, research]
+    states:
+      - {country: CN, relation: operated_by, agency: "MSS Hainan State Security Department", confidence: confirmed,
+         source_name: "US/UK/EU joint attribution and DOJ indictment, 19 Jul 2021"}
+
+  - match: HAFNIUM
+    motivation: espionage
+    summary: >-
+      Actor behind the 2021 mass exploitation of Microsoft Exchange (ProxyLogon); later tracked as
+      Silk Typhoon targeting IT supply chains.
+    target_countries: [US]
+    target_sectors: [government, defence, law firms, NGOs, IT services]
+    states:
+      - {country: CN, relation: sponsor, agency: "MSS-affiliated", confidence: confirmed,
+         source_name: "US/UK/EU/NATO joint attribution, 19 Jul 2021"}
+    history:
+      - {date: 2021-03-02, title: "ProxyLogon Exchange zero-days disclosed", kind: disclosure}
+
+  - match: Volt Typhoon
+    motivation: prepositioning
+    summary: >-
+      PRC state-sponsored actor pre-positioning in US critical infrastructure (communications, energy, water,
+      transportation) using living-off-the-land techniques. US agencies assess the goal is disruption during
+      a future crisis, e.g. over Taiwan: a textbook hybrid-warfare enabler.
+    target_countries: [US, GU]
+    target_sectors: [communications, energy, water, transportation]
+    states:
+      - {country: CN, relation: sponsor, confidence: confirmed,
+         source_name: "CISA advisory AA24-038A, 7 Feb 2024", source_url: "https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-038a"}
+    history:
+      - {date: 2023-05-24, title: "Microsoft and Five Eyes disclose Volt Typhoon", kind: disclosure}
+      - {date: 2024-01-31, title: "KV-botnet disrupted by FBI", kind: disclosure}
+      - {date: 2024-02-07, title: "CISA warns of critical-infrastructure pre-positioning", kind: disclosure}
+
+  - match: Salt Typhoon
+    motivation: espionage
+    summary: >-
+      PRC actor that compromised major US and global telecommunications carriers, including lawful-intercept
+      systems.
+    target_countries: [US, GB, CA]
+    target_sectors: [telecommunications, government]
+    states:
+      - {country: CN, relation: sponsor, agency: "Contractors incl. Sichuan Juxinhe Network Technology", confidence: confirmed,
+         source_name: "US Treasury sanctions, 17 Jan 2025"}
+    history:
+      - {date: 2024-10-05, title: "US carrier compromises reported", kind: disclosure}
+
+  - match: Mustang Panda
+    motivation: espionage
+    summary: Prolific Chinese espionage actor using PlugX variants against governments and NGOs in Asia and Europe.
+    target_countries: [MN, VN, MM, PH, DE, UA]
+    target_sectors: [government, NGOs, diplomacy]
+    states:
+      - {country: CN, relation: sponsor, confidence: high, note: "Vendor assessment; the US DOJ described the PlugX operators as PRC state-sponsored."}
+    history:
+      - {date: 2025-01-14, title: "FBI deletes PlugX from ~4,200 US computers", kind: disclosure}
+
+  - match: ZIRCONIUM
+    motivation: espionage
+    summary: MSS-linked actor (APT31) targeting politicians, dissidents and critics of the PRC.
+    target_countries: [US, GB, FI, CZ]
+    target_sectors: [government, politics, technology]
+    states:
+      - {country: CN, relation: operated_by, agency: "MSS Hubei State Security Department", confidence: confirmed,
+         source_name: "US DOJ indictment, 25 Mar 2024"}
+
+  # ───────────────────────────── North Korea ─────────────────────────────
+  - match: Lazarus Group
+    motivation: mixed
+    summary: >-
+      Umbrella for Reconnaissance General Bureau operations combining espionage, sabotage and large-scale theft
+      (banks, cryptocurrency) to fund the regime.
+    target_countries: [US, KR, JP, BD]
+    target_sectors: [finance, cryptocurrency, defence, media]
+    states:
+      - {country: KP, relation: operated_by, agency: "Reconnaissance General Bureau (RGB)", confidence: confirmed,
+         source_name: "US DOJ complaint vs. Park Jin Hyok, 6 Sep 2018; US Treasury sanctions, 13 Sep 2019"}
+    relations:
+      - {target: APT38, type: subgroup, description: "Financially-focused RGB cluster within the Lazarus umbrella (Treasury 2019).", confidence: confirmed}
+      - {target: Andariel, type: subgroup, description: "RGB cluster within the Lazarus umbrella (Treasury 2019).", confidence: confirmed}
+      - {target: Kimsuky, type: same_agency, description: "Both RGB-controlled.", confidence: confirmed}
+    history:
+      - {date: 2014-11-24, title: "Sony Pictures destructive attack", kind: operation}
+      - {date: 2016-02-04, title: "Bangladesh Bank SWIFT heist", kind: operation, description: "US$81 million stolen via fraudulent SWIFT messages."}
+      - {date: 2017-05-12, title: "WannaCry ransomware worm", kind: operation}
+      - {date: 2022-03-23, title: "Ronin bridge theft (~US$620M)", kind: operation}
+      - {date: 2025-02-21, title: "Bybit theft (~US$1.5B)", kind: operation, description: "Largest crypto theft on record; FBI attributed it to TraderTraitor on 26 Feb 2025."}
+
+  - match: APT38
+    motivation: financial
+    summary: RGB unit focused on financial theft from banks and SWIFT infrastructure.
+    target_countries: [BD, VN, MX, CL, TW]
+    target_sectors: [finance]
+    states:
+      - {country: KP, relation: operated_by, agency: "Reconnaissance General Bureau (RGB) — Bluenoroff", confidence: confirmed, source_name: "US Treasury sanctions, 13 Sep 2019"}
+
+  - match: Andariel
+    motivation: mixed
+    summary: RGB 3rd Bureau unit stealing defence and nuclear technology and running ransomware to fund operations.
+    target_countries: [KR, US, IN]
+    target_sectors: [defence, nuclear, healthcare, government]
+    states:
+      - {country: KP, relation: operated_by, agency: "RGB 3rd Bureau", confidence: confirmed, source_name: "CISA advisory AA24-207A and DOJ indictment, 25 Jul 2024"}
+
+  - match: Kimsuky
+    motivation: espionage
+    summary: RGB espionage actor targeting foreign-policy experts, think tanks and nuclear policy on the Korean peninsula.
+    target_countries: [KR, US, JP]
+    target_sectors: [think tanks, government, academia, nuclear]
+    states:
+      - {country: KP, relation: operated_by, agency: "Reconnaissance General Bureau (RGB)", confidence: confirmed, source_name: "US Treasury sanctions, 30 Nov 2023"}
+
+  - match: APT37
+    motivation: espionage
+    summary: North Korean espionage actor focused on South Korea, defectors and regional targets.
+    target_countries: [KR, JP, VN]
+    target_sectors: [government, defectors, media]
+    states:
+      - {country: KP, relation: sponsor, confidence: high, note: "Vendor assessment (Mandiant and others)."}
+
+  # ───────────────────────────── Iran ─────────────────────────────
+  - match: APT33
+    motivation: espionage
+    summary: Iranian actor targeting aviation, energy and petrochemical sectors, particularly in Saudi Arabia and the US.
+    target_countries: [SA, US, KR, AE]
+    target_sectors: [aviation, energy, petrochemical]
+    states:
+      - {country: IR, relation: sponsor, confidence: high, note: "Vendor assessment."}
+
+  - match: OilRig
+    motivation: espionage
+    summary: Iranian (MOIS-linked) espionage actor targeting Middle Eastern governments, energy and telecommunications.
+    target_countries: [SA, AE, IL, JO, IQ, KW, LB]
+    target_sectors: [government, energy, telecommunications, finance]
+    states:
+      - {country: IR, relation: sponsor, agency: "Ministry of Intelligence and Security (MOIS) (assessed)", confidence: high}
+    relations:
+      - {target: MuddyWater, type: same_agency, description: "Both assessed to operate on behalf of MOIS.", confidence: medium}
+
+  - match: MuddyWater
+    motivation: espionage
+    summary: MOIS subordinate element conducting espionage and destructive operations across the Middle East, Asia and Europe.
+    target_countries: [IL, TR, SA, AE, PK, JO]
+    target_sectors: [government, telecommunications, defence, oil and gas]
+    states:
+      - {country: IR, relation: operated_by, agency: "Ministry of Intelligence and Security (MOIS)", confidence: confirmed, source_name: "US Cyber Command, 12 Jan 2022"}
+
+  - match: Magic Hound
+    motivation: espionage
+    summary: IRGC-linked actor (APT35 / Charming Kitten) running credential-phishing and surveillance against dissidents, officials and researchers.
+    target_countries: [US, IL, GB, SA]
+    target_sectors: [government, academia, media, human rights]
+    states:
+      - {country: IR, relation: sponsor, agency: "IRGC Intelligence Organization (assessed)", confidence: high}
+    relations:
+      - {target: APT42, type: overlap, description: "Vendors track overlapping IRGC-IO phishing operations under both names.", confidence: medium}
+
+  - match: APT42
+    motivation: espionage
+    summary: IRGC-IO actor focused on credential theft and surveillance; behind the 2024 hack of the Trump presidential campaign.
+    target_countries: [US, IL, GB]
+    target_sectors: [politics, government, NGOs, media]
+    states:
+      - {country: IR, relation: operated_by, agency: "IRGC Intelligence Organization", confidence: confirmed, source_name: "US DOJ indictment of three IRGC employees, 27 Sep 2024"}
+    history:
+      - {date: 2024-08-19, title: "FBI/ODNI attribute campaign hack-and-leak to Iran", kind: disclosure}
+
+  - match: APT39
+    motivation: espionage
+    summary: MOIS front company operation (Rana Intelligence Computing) surveilling travel, telecom and dissidents.
+    target_countries: [IR, US, TR, SA]
+    target_sectors: [telecommunications, travel, IT]
+    states:
+      - {country: IR, relation: operated_by, agency: "MOIS via Rana Intelligence Computing Co.", confidence: confirmed, source_name: "US Treasury sanctions, 17 Sep 2020"}
+
+  - match: Fox Kitten
+    motivation: mixed
+    summary: Iranian access broker exploiting edge devices and partnering with ransomware affiliates.
+    target_countries: [US, IL, AE, AZ]
+    target_sectors: [defence, healthcare, education, government]
+    states:
+      - {country: IR, relation: sponsor, confidence: confirmed, source_name: "FBI/CISA advisory AA24-241A, 28 Aug 2024"}
+
+  - match: VOID MANTICORE
+    motivation: destructive
+    summary: MOIS-linked destructive actor running wiper attacks behind hacktivist personas (e.g. HomeLand Justice against Albania).
+    target_countries: [AL, IL]
+    target_sectors: [government, critical infrastructure]
+    states:
+      - {country: IR, relation: operated_by, agency: "Ministry of Intelligence and Security (MOIS)", confidence: confirmed, source_name: "US Treasury sanctions on MOIS for Albania attacks, 9 Sep 2022"}
+    relations:
+      - {target: OilRig, type: collaboration, description: "Check Point described hand-offs from an OilRig-linked access cluster (Scarred Manticore) to Void Manticore.", confidence: medium}
+    history:
+      - {date: 2022-07-15, title: "Destructive attack on Albanian government", kind: operation,
+         description: "Ransomware and wipers took Albanian government services offline; Albania cut diplomatic ties with Iran in September 2022."}
+
+  - match: CyberAv3ngers
+    name: CyberAv3ngers
+    aliases: [Cyber Av3ngers, Cyber Avengers]
+    kind: persona
+    motivation: destructive
+    summary: >-
+      IRGC Cyber-Electronic Command persona that tampered with Israeli-made Unitronics PLCs at water utilities
+      worldwide after 7 October 2023.
+    target_countries: [US, IL, IE]
+    target_sectors: [water, energy, industrial control systems]
+    states:
+      - {country: IR, relation: operated_by, agency: "IRGC Cyber-Electronic Command (IRGC-CEC)", confidence: confirmed, source_name: "US Treasury sanctions, 2 Feb 2024"}
+    history:
+      - {date: 2023-11-25, title: "Unitronics PLC defacements at US water utilities", kind: operation,
+         description: "Including the Municipal Water Authority of Aliquippa, Pennsylvania."}
+
+  # ───────────────────────────── Israel (alleged) ─────────────────────────────
+  - match: Predatory Sparrow
+    name: Predatory Sparrow
+    aliases: [Gonjeshke Darande]
+    kind: persona
+    motivation: destructive
+    summary: >-
+      Persona (Gonjeshke Darande) claiming disruptive attacks on Iranian fuel distribution, steel plants and
+      financial institutions, often timed with regional escalation. Widely reported as linked to Israel; no
+      official attribution.
+    target_countries: [IR]
+    target_sectors: [energy, manufacturing, finance, cryptocurrency]
+    states:
+      - {country: IL, relation: alleged, confidence: medium, note: "Media and vendor assessment; Israel has not confirmed."}
+    history:
+      - {date: 2021-10-26, title: "Iranian fuel payment system disrupted", kind: operation}
+      - {date: 2022-06-27, title: "Attack on Iranian steel plants", kind: operation, description: "Claimed attack causing a fire at Khuzestan Steel."}
+      - {date: 2023-12-18, title: "~70% of Iranian petrol stations disrupted", kind: operation}
+      - {date: 2025-06-17, title: "Bank Sepah data destroyed", kind: operation}
+      - {date: 2025-06-18, title: "Nobitex exchange funds burned (~US$90M)", kind: operation}
+
+  # ───────────────────────────── United States (alleged) ─────────────────────────────
+  - match: Equation
+    aliases: [Equation Group]
+    motivation: espionage
+    summary: >-
+      Highly sophisticated actor exposed by Kaspersky in 2015 with tooling later leaked by the Shadow Brokers;
+      researchers widely link it to the NSA. No official attribution.
+    target_countries: [IR, RU, PK, AF, CN, SY]
+    target_sectors: [government, telecommunications, nuclear, military]
+    states:
+      - {country: US, relation: alleged, confidence: medium, note: "Researcher assessment based on Shadow Brokers leaks; not officially acknowledged."}
+    history:
+      - {date: 2015-02-16, title: "Kaspersky exposes the Equation Group", kind: disclosure}
+      - {date: 2016-08-13, title: "Shadow Brokers begin leaking tooling", kind: disclosure}
+
+  # ───────────────────────────── Belarus ─────────────────────────────
+  - match: UNC1151
+    name: UNC1151 (Ghostwriter)
+    aliases: [UNC1151, Ghostwriter, TA445]
+    motivation: influence
+    summary: >-
+      Actor behind the Ghostwriter influence campaign: compromising officials' and media accounts in Poland,
+      Lithuania, Latvia and Ukraine to publish anti-NATO narratives.
+    target_countries: [PL, LT, LV, UA, DE]
+    target_sectors: [government, media, politics]
+    states:
+      - {country: BY, relation: sponsor, agency: "Belarusian military (assessed)", confidence: high, source_name: "Mandiant, Nov 2021"}
+      - {country: RU, relation: alleged, confidence: medium, note: "The EU and Germany linked Ghostwriter to Russian state actors (Sep 2021)."}
+
+  - match: MoustachedBouncer
+    motivation: espionage
+    summary: Espionage actor using ISP-level adversary-in-the-middle against foreign embassies in Belarus.
+    target_countries: [BY]
+    target_sectors: [diplomacy]
+    states:
+      - {country: BY, relation: aligned, confidence: medium, note: "ESET assessment; lawful-intercept access implies Belarusian state involvement."}
+
+  # ───────────────────────────── Vietnam / South Asia ─────────────────────────────
+  - match: APT32
+    motivation: espionage
+    summary: Vietnamese state-aligned actor (OceanLotus) targeting foreign businesses, governments and dissidents in Southeast Asia.
+    target_countries: [VN, KH, PH, CN, DE]
+    target_sectors: [government, manufacturing, media, dissidents]
+    states:
+      - {country: VN, relation: sponsor, confidence: high, note: "Vendor assessment."}
+
+  - match: Transparent Tribe
+    motivation: espionage
+    summary: Pakistan-linked actor targeting Indian military and government personnel.
+    target_countries: [IN, AF]
+    target_sectors: [military, government, education]
+    states:
+      - {country: PK, relation: sponsor, confidence: medium, note: "Vendor assessment."}
+
+  - match: Sidewinder
+    motivation: espionage
+    summary: India-linked actor targeting Pakistani, Chinese and South Asian government and military organisations.
+    target_countries: [PK, CN, NP, LK, BD]
+    target_sectors: [military, government, maritime]
+    states:
+      - {country: IN, relation: sponsor, confidence: medium, note: "Vendor assessment."}

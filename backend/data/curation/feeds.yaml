@@ -1,0 +1,21 @@
+# RSS/Atom sources polled for APT activity. Items are kept only when they mention a tracked group
+# (name or alias) — generic security news is discarded.
+feeds:
+  - {key: welivesecurity, name: "ESET WeLiveSecurity", url: "https://www.welivesecurity.com/en/rss/feed/"}
+  - {key: microsoft, name: "Microsoft Security Blog", url: "https://www.microsoft.com/en-us/security/blog/feed/"}
+  - {key: unit42, name: "Palo Alto Unit 42", url: "https://unit42.paloaltonetworks.com/feed/"}
+  - {key: securelist, name: "Kaspersky Securelist", url: "https://securelist.com/feed/"}
+  - {key: checkpoint, name: "Check Point Research", url: "https://research.checkpoint.com/feed/"}
+  - {key: sentinellabs, name: "SentinelLabs", url: "https://www.sentinelone.com/labs/feed/"}
+  - {key: talos, name: "Cisco Talos", url: "https://blog.talosintelligence.com/rss/"}
+  - {key: proofpoint, name: "Proofpoint Threat Insight", url: "https://www.proofpoint.com/us/threat-insight-blog.xml"}
+  - {key: recordedfuture, name: "Recorded Future", url: "https://www.recordedfuture.com/feed"}
+  - {key: therecord, name: "The Record", url: "https://therecord.media/feed"}
+  - {key: bleepingcomputer, name: "BleepingComputer", url: "https://www.bleepingcomputer.com/feed/"}
+  - {key: thehackernews, name: "The Hacker News", url: "https://feeds.feedburner.com/TheHackersNews"}
+  - {key: securityweek, name: "SecurityWeek", url: "https://www.securityweek.com/feed/"}
+  - {key: cyberscoop, name: "CyberScoop", url: "https://cyberscoop.com/feed/"}
+  - {key: ncsc-uk, name: "UK NCSC", url: "https://www.ncsc.gov.uk/api/1/services/v1/report-rss-feed.xml"}
+  - {key: cert-fr, name: "CERT-FR (ANSSI)", url: "https://www.cert.ssi.gouv.fr/feed/"}
+  - {key: cert-ua, name: "CERT-UA", url: "https://cert.gov.ua/api/articles/rss", default_countries: [UA]}
+  - {key: cisa, name: "CISA Advisories", url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"}
